@@ -17,7 +17,10 @@ $students = $stmt->fetchAll();
         <td><?= htmlspecialchars($s['course']) ?></td>
         <td>
             <a href="edit.php?id=<?= $s['id'] ?>">Edit</a>
-            <a href="delete.php?id=<?= $s['id'] ?>" onclick="return confirm('Are you sure?')">Delete</a>
+            <form action="delete.php" method="GET" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this record?')">
+                <input type="hidden" name="id" value="<?= $s['id'] ?>">
+                <button type="submit">Delete</button>
+            </form>
         </td>
     </tr>
     <?php endforeach; ?>
