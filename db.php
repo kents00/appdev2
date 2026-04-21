@@ -1,4 +1,5 @@
 <?php
+// Database configuration
 $host = 'localhost';
 $db   = 'school_db';
 $user = 'root';
@@ -15,6 +16,15 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    // In production, log error instead of showing it
+    error_log($e->getMessage());
+    die("A database error occurred. Please try again later.");
 }
-?>
+
+/**
+ * Helper function to sanitize output
+ */
+function s($text) {
+    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+}
+?>
