@@ -72,9 +72,9 @@ include 'header.php';
                         <td>
                             <div style="display: flex; gap: 0.5rem;">
                                 <a href="edit.php?id=<?= $s['id'] ?>" class="btn btn-primary btn-sm">Edit</a>
-                                <form action="delete.php" method="GET" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this record?')">
+                                <form action="delete.php" method="GET" style="display:inline;" class="delete-form">
                                     <input type="hidden" name="id" value="<?= $s['id'] ?>">
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    <button type="submit" class="btn btn-danger btn-sm js-delete-trigger" data-student="<?= s($s['name']) ?>">Delete</button>
                                 </form>
                             </div>
                         </td>
@@ -86,4 +86,95 @@ include 'header.php';
     </div>
 </div>
 
-<?php include 'footer.php'; ?>
+<div class="modal-backdrop" id="deleteModal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal-icon-wrap">
+            <span class="modal-icon">!</span>
+        </div>
+        <h3 id="deleteModalTitle">Delete Student Record</h3>
+        <p class="modal-text" id="deleteModalMessage">This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-primary" id="modalCancelBtn">Cancel</button>
+            <button type="button" class="btn btn-danger" id="modalConfirmBtn">Yes, Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('deleteModal');
+        const message = document.getElementById('deleteModalMessage');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const deleteForms = document.querySelectorAll('.delete-form');
+
+        let pendingForm = null;
+
+        // Runtime fallback so the popup behaves correctly even if stale CSS is cached.
+        modal.style.display = 'none';
+        modal.style.position = 'fixed';
+        modal.style.inset = '0';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.padding = '1rem';
+        modal.style.background = 'rgba(2, 6, 23, 0.65)';
+        modal.style.zIndex = '300';
+
+        const openModal = (studentName, form) => {
+            pendingForm = form;
+            message.textContent = 'You are about to permanently delete "' + studentName + '". This action cannot be undone.';
+            modal.hidden = false;
+            modal.style.display = 'flex';
+            modal.classList.add('is-visible');
+            modal.setAttribute('aria-hidden', 'false');
+            cancelBtn.focus();
+        };
+
+        const closeModal = () => {
+            modal.classList.remove('is-visible');
+            modal.setAttribute('aria-hidden', 'true');
+            modal.style.display = 'none';
+            modal.hidden = true;
+            pendingForm = null;
+        };
+
+        deleteForms.forEach((form) => {
+            form.addEventListener('submit', function (event) {
+                if (this.dataset.confirmed === 'true') {
+                    this.dataset.confirmed = 'false';
+                    return;
+                }
+
+                event.preventDefault();
+                const trigger = this.querySelector('.js-delete-trigger');
+                const studentName = trigger && trigger.dataset.student ? trigger.dataset.student : 'this student';
+                openModal(studentName, this);
+            });
+        });
+
+        cancelBtn.addEventListener('click', closeModal);
+
+        confirmBtn.addEventListener('click', function () {
+            if (!pendingForm) {
+                return;
+            }
+
+            pendingForm.dataset.confirmed = 'true';
+            pendingForm.submit();
+        });
+
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+                closeModal();
+            }
+        });
+    })();
+</script>
+
+<?php include 'footer.php'; ?>
